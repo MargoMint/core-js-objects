@@ -373,34 +373,136 @@ function group(/* array, keySelector, valueSelector */) {
  *
  *  For more examples see unit tests.
  */
+class CssSelector {
+  constructor() {
+    this.parts = {
+      element: '',
+      id: '',
+      classes: [],
+      attrs: [],
+      pseudoClasses: [],
+      pseudoElement: '',
+    };
+    this.order = [];
+  }
+
+  element(value) {
+    if (this.parts.element)
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    this.checkOrder('element');
+    this.parts.element = value;
+    return this;
+  }
+
+  id(value) {
+    if (this.parts.id)
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    this.checkOrder('id');
+    this.parts.id = `#${value}`;
+    return this;
+  }
+
+  class(value) {
+    this.checkOrder('class');
+    this.parts.classes.push(`.${value}`);
+    return this;
+  }
+
+  attr(value) {
+    this.checkOrder('attr');
+    this.parts.attrs.push(`[${value}]`);
+    return this;
+  }
+
+  pseudoClass(value) {
+    this.checkOrder('pseudoClass');
+    this.parts.pseudoClasses.push(`:${value}`);
+    return this;
+  }
+
+  pseudoElement(value) {
+    if (this.parts.pseudoElement) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    }
+    this.checkOrder('pseudoElement');
+    this.parts.pseudoElement = `::${value}`;
+    return this;
+  }
+
+  stringify() {
+    return (
+      this.parts.element +
+      this.parts.id +
+      this.parts.classes.join('') +
+      this.parts.attrs.join('') +
+      this.parts.pseudoClasses.join('') +
+      this.parts.pseudoElement
+    );
+  }
+
+  combine(selector1, combinator, selector2) {
+    this.parts.element = `${selector1.stringify()} ${combinator} ${selector2.stringify()}`;
+    return this;
+  }
+
+  checkOrder(part) {
+    const correctOrder = [
+      'element',
+      'id',
+      'class',
+      'attr',
+      'pseudoClass',
+      'pseudoElement',
+    ];
+    if (this.order.includes(part)) return;
+
+    const lastPart = this.order[this.order.length - 1];
+    if (
+      lastPart &&
+      correctOrder.indexOf(part) < correctOrder.indexOf(lastPart)
+    ) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    }
+
+    this.order.push(part);
+  }
+}
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    return new CssSelector().element(value);
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return new CssSelector().id(value);
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return new CssSelector().class(value);
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    return new CssSelector().attr(value);
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    return new CssSelector().pseudoClass(value);
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    return new CssSelector().pseudoElement(value);
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selector1, combinator, selector2) {
+    return new CssSelector().combine(selector1, combinator, selector2);
   },
 };
 
